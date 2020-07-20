@@ -102,7 +102,7 @@ export default class SimpleAnnotationServerV2Adapter {
 
   convertV2AnnoList(v2annos) {
     if (Array.isArray(v2annos)) {
-        return v2annos.forEach(this.convertV2Anno);
+        return v2annos.map(this.convertV2Anno);
     }
     return v2annos;
   }
