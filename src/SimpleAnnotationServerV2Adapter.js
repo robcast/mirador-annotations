@@ -12,10 +12,9 @@ export default class SimpleAnnotationServerV2Adapter {
   }
 
   /** */
-  async create(webanno) {
-    const annotation = this.convertV3Anno(webanno);
+  async create(annotation) {
     return fetch(`${this.endpointUrl}/create`, {
-      body: JSON.stringify(annotation),
+      body: JSON.stringify(this.createV2Anno(annotation)),
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -28,18 +27,13 @@ export default class SimpleAnnotationServerV2Adapter {
 
   /** */
   async update(annotation) {
-    return fetch(`${this.endpointUrl}/${encodeURIComponent(annotation.id)}`, {
-      body: JSON.stringify({
-        annotation: {
-          data: JSON.stringify(annotation),
-          uuid: annotation.id,
-        },
-      }),
+    return fetch(`${this.endpointUrl}/update`, {
+      body: JSON.stringify(this.createV2Anno(annotation)),
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      method: 'PATCH',
+      method: 'POST',
     })
       .then((response) => this.all())
       .catch(() => this.all());
@@ -47,7 +41,7 @@ export default class SimpleAnnotationServerV2Adapter {
 
   /** */
   async delete(annoId) {
-    return fetch(`${this.endpointUrl}/${encodeURIComponent(annoId)}`, {
+    return fetch(`${this.endpointUrl}/destroy?uri=${encodeURIComponent(annoId)}`, {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -65,15 +59,17 @@ export default class SimpleAnnotationServerV2Adapter {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-    })).json().then((anno) => this.convertV2Anno(anno));
+    })).json()
+      .then((anno) => this.createV3Anno(anno));
   }
 
-  /** */
+  /** Returns an AnnotationPage with all annotations */
   async all() {
-    return (await fetch(this.annotationPageId)).json().then((annos) => this.convertV2AnnoList(annos));
+    return (await fetch(this.annotationPageId)).json().then((annos) => this.createAnnotationPage(annos));
   }
   
-  convertV3Anno(v3anno) {
+  /** Creates a V2 annotation from a V3 annotation */
+  createV2Anno(v3anno) {
     let v2anno = {
       '@context': 'http://iiif.io/api/presentation/2/context.json',
       '@type': 'oa:Annotation',
@@ -88,6 +84,9 @@ export default class SimpleAnnotationServerV2Adapter {
         'chars': v3anno.body.value
       }
     };
+    if (v3anno.id && v3anno.id.startsWith('http')) {
+        v2anno['@id'] = v3anno.id;
+    }
     if (v3anno.target.selector.type === 'SvgSelector') {
       v2anno.on.selector = {
         '@type': 'oa:SvgSelector',
@@ -100,17 +99,25 @@ export default class SimpleAnnotationServerV2Adapter {
     return v2anno;
   }
 
-  convertV2AnnoList(v2annos) {
+  /** Creates an AnnotationPage from a list of V2 annotations */
+  createAnnotationPage(v2annos) {
     if (Array.isArray(v2annos)) {
-        return v2annos.map(this.convertV2Anno);
+        let v3annos = v2annos.map(this.createV3Anno);
+        return {
+          id: this.annotationPageId,
+          items: v3annos,
+          type: 'AnnotationPage',
+        };
     }
     return v2annos;
   }
 
-  convertV2Anno(v2anno) {
+  /** Creates a V3 annotation from a V2 annotation */
+  createV3Anno(v2anno) {
     let v3anno = {
       'type': 'Annotation',
       'motivation': 'commenting',
+      'id': v2anno['@id'],
       'target': {
         'id': v2anno.on.full
       },
