@@ -54,13 +54,12 @@ export default class SimpleAnnotationServerV2Adapter {
 
   /** */
   async get(annoId) {
-    return (await fetch(`${this.endpointUrl}/${encodeURIComponent(annoId)}`, {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })).json()
-      .then((anno) => this.createV3Anno(anno));
+    // SAS does not have GET for a single annotation
+    const annotationPage = await this.all();
+    if (annotationPage) {
+      return annotationPage.items.find((item) => item.id === annoId);
+    }
+    return null;
   }
 
   /** Returns an AnnotationPage with all annotations */
@@ -84,6 +83,7 @@ export default class SimpleAnnotationServerV2Adapter {
         'chars': v3anno.body.value
       }
     };
+    // copy id if it is SAS-generated
     if (v3anno.id && v3anno.id.startsWith('http')) {
         v2anno['@id'] = v3anno.id;
     }
@@ -104,9 +104,9 @@ export default class SimpleAnnotationServerV2Adapter {
     if (Array.isArray(v2annos)) {
         let v3annos = v2annos.map(this.createV3Anno);
         return {
-          id: this.annotationPageId,
-          items: v3annos,
-          type: 'AnnotationPage',
+          'id': this.annotationPageId,
+          'items': v3annos,
+          'type': 'AnnotationPage',
         };
     }
     return v2annos;
