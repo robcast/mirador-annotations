@@ -102,7 +102,7 @@ export default class SimpleAnnotationServerV2Adapter {
   /** Creates an AnnotationPage from a list of V2 annotations */
   createAnnotationPage(v2annos) {
     if (Array.isArray(v2annos)) {
-        let v3annos = v2annos.map(this.createV3Anno);
+        let v3annos = v2annos.map((anno) => this.createV3Anno(anno));
         return {
           'id': this.annotationPageId,
           'items': v3annos,
@@ -118,24 +118,60 @@ export default class SimpleAnnotationServerV2Adapter {
       'type': 'Annotation',
       'motivation': 'commenting',
       'id': v2anno['@id'],
-      'target': {
-        'id': v2anno.on.full
-      },
-      'body': {
-        'type': 'TextualBody',
-        'value': v2anno.resource[0].chars
-      }
     };
-    if (v2anno.on.selector['@type'] === 'oa:SvgSelector') {
-      v3anno.target.selector = {
-        'type': 'SvgSelector',
-        'value': v2anno.on.selector.value
-      }
+    if (Array.isArray(v2anno.resource)) {
+        /* v3anno.body = v2anno.resource.map((body) => this.createV3AnnoBody(body));
+        can't do multiple bodies, use the first text body */
+        v3anno.body = this.createV3AnnoBody(v2anno.resource.filter((body) => body['@type'] === 'dctypes:Text')[0]);
+    } else {
+        v3anno.body = this.createV3AnnoBody(v2anno.resource);
     }
-    if (v2anno.resource[0].language) {
-      v3anno.body.language = v2anno.resource[0].language;
+    if (Array.isArray(v2anno.on)) {
+        v3anno.target = this.createV3AnnoTarget(v2anno.on[0]);
+    } else {
+        v3anno.target = this.createV3AnnoTarget(v2anno.on);
     }
     return v3anno;
   }
 
+  createV3AnnoBody(v2body) {
+    let v3body = {
+      'type': 'TextualBody',
+      'value': v2body.chars
+    };
+    if (v2body.format) {
+      v3body.format = v2body.format;
+    }
+    if (v2body.language) {
+      v3body.language = v2body.language;
+    }
+    if (v2body['@type'] === 'oa:Tag') {
+      v3body.purpose = 'tagging';
+    }
+    return v3body;
+  }
+  
+  createV3AnnoTarget(v2target) {
+    let v3target = {
+      'id': v2target.full        
+    }
+    if (v2target.selector['@type'] === 'oa:SvgSelector') {
+      v3target.selector = {
+        'type': 'SvgSelector',
+        'value': v2target.selector.value
+      }
+    } else if (v2target.selector['@type'] === 'oa:Choice') {
+      // punt to SvgSelector from M2 annotation
+      if (v2target.selector.item['@type'] === 'oa:SvgSelector') {
+        v3target.selector = {
+          'type': 'SvgSelector',
+          'value': v2target.selector.item.value
+        }
+      } else {
+        // no selector :-(
+        return null;
+      }
+    }
+    return v3target;
+  }
 }
