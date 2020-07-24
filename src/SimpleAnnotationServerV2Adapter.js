@@ -87,16 +87,39 @@ export default class SimpleAnnotationServerV2Adapter {
     if (v3anno.id && v3anno.id.startsWith('http')) {
         v2anno['@id'] = v3anno.id;
     }
-    if (v3anno.target.selector.type === 'SvgSelector') {
-      v2anno.on.selector = {
-        '@type': 'oa:SvgSelector',
-        'value': v3anno.target.selector.value
+    if (v3anno.target.selector) {
+      if (Array.isArray(v3anno.target.selector)) {
+        let selectors = v3anno.target.selector.map((selector) => this.createV2AnnoSelector(selector));
+        // create choice, assuming two elements and 0 is default
+        v2anno.on.selector = {
+          '@type': 'oa:Choice',
+          'default': selectors[0],
+          'item': selectors[1]
+        };
+      } else {
+        v2anno.on.selector = this.createV2AnnoSelector(v3anno.target.selector);
       }
     }
     if (v3anno.body.language) {
       v2anno.resource.language = v3anno.body.language;
     }
     return v2anno;
+  }
+
+  createV2AnnoSelector(v3selector) {
+    let v2selector = null;
+    if (v3selector.type === 'SvgSelector') {
+      v2selector = {
+        '@type': 'oa:SvgSelector',
+        'value': v3selector.value
+      }
+    } else if (v3selector.type === 'FragmentSelector') {
+      v2selector = {
+        '@type': 'oa:FragmentSelector',
+        'value': v3selector.value
+      }
+    }
+    return v2selector;
   }
 
   /** Creates an AnnotationPage from a list of V2 annotations */
