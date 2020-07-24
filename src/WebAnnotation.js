@@ -30,16 +30,28 @@ export default class WebAnnotation {
   target() {
     let target = this.canvasId;
     if (this.svg) {
-      target = {};
-      target.id = this.canvasId;
-      target.selector = {
-        type: 'SvgSelector',
-        value: this.svg,
-      };
-      return target;
+      target = {
+        id: this.canvasId,
+        selector = {
+          type: 'SvgSelector',
+          value: this.svg,
+        }
+      }
     }
     if (this.xywh) {
-      target += `#xywh=${this.xywh}`;
+      if (target.selector) {
+        // add fragment selector
+        target.selector = [
+          target.selector,
+          {
+            type: 'FragmentSelector',
+            value: `xywh=${this.xywh}`
+          }          
+        ]
+      } else {
+        // just target with fragment
+        target += `#xywh=${this.xywh}`;
+      }
     }
     return target;
   }
