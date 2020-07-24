@@ -149,10 +149,13 @@ export default class SimpleAnnotationServerV2Adapter {
     } else {
         v3anno.body = this.createV3AnnoBody(v2anno.resource);
     }
-    if (Array.isArray(v2anno.on)) {
-        v3anno.target = this.createV3AnnoTarget(v2anno.on[0]);
-    } else {
-        v3anno.target = this.createV3AnnoTarget(v2anno.on);
+    let v2target = v2anno.on;
+    if (Array.isArray(v2target)) {
+        v2target = v2target[0];
+    }
+    v3anno.target = {
+      'id': v2target.full,
+      'selector': this.createV3AnnoSelector(v2target.selector)
     }
     return v3anno;
   }
@@ -174,27 +177,24 @@ export default class SimpleAnnotationServerV2Adapter {
     return v3body;
   }
   
-  createV3AnnoTarget(v2target) {
-    let v3target = {
-      'id': v2target.full        
-    }
-    if (v2target.selector['@type'] === 'oa:SvgSelector') {
-      v3target.selector = {
+  createV3AnnoSelector(v2selector) {
+    if (v2selector['@type'] === 'oa:SvgSelector') {
+      return {
         'type': 'SvgSelector',
-        'value': v2target.selector.value
+        'value': v2selector.value
       }
-    } else if (v2target.selector['@type'] === 'oa:Choice') {
-      // punt to SvgSelector from M2 annotation
-      if (v2target.selector.item['@type'] === 'oa:SvgSelector') {
-        v3target.selector = {
-          'type': 'SvgSelector',
-          'value': v2target.selector.item.value
-        }
-      } else {
-        // no selector :-(
-        return null;
+    } else if (v2selector['@type'] === 'oa:FragmentSelector') {
+      return {
+        'type': 'FragmentSelector',
+        'value': v2selector.value
       }
+    } else if (v2selector['@type'] === 'oa:Choice') {
+      return [
+        this.createV3AnnoSelector(v2selector.default),
+        this.createV3AnnoSelector(v2selector.item)
+      ]
     }
-    return v3target;
+    // unknown selector :-(
+    return null;
   }
 }
