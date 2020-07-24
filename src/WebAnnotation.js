@@ -32,7 +32,7 @@ export default class WebAnnotation {
     if (this.svg) {
       target = {
         id: this.canvasId,
-        selector = {
+        selector: {
           type: 'SvgSelector',
           value: this.svg,
         }
@@ -42,11 +42,11 @@ export default class WebAnnotation {
       if (target.selector) {
         // add fragment selector
         target.selector = [
-          target.selector,
           {
             type: 'FragmentSelector',
             value: `xywh=${this.xywh}`
-          }          
+          },
+          target.selector
         ]
       } else {
         // just target with fragment
