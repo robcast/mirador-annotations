@@ -32,25 +32,28 @@ export default class WebAnnotation {
     if (this.svg) {
       target = {
         id: this.canvasId,
-        selector = {
+        selector: {
           type: 'SvgSelector',
           value: this.svg,
         }
       }
     }
     if (this.xywh) {
+      let fragmentselector = {
+        type: 'FragmentSelector',
+        value: `xywh=${this.xywh}`
+      };
       if (target.selector) {
         // add fragment selector
         target.selector = [
-          target.selector,
-          {
-            type: 'FragmentSelector',
-            value: `xywh=${this.xywh}`
-          }          
+          fragmentselector,
+          target.selector
         ]
       } else {
-        // just target with fragment
-        target += `#xywh=${this.xywh}`;
+        target = {
+          id: this.canvasId,
+          selector: fragmentselector
+        }
       }
     }
     return target;
