@@ -144,9 +144,9 @@ export default class SimpleAnnotationServerV2Adapter {
       'id': v2anno['@id'],
     };
     if (Array.isArray(v2anno.resource)) {
-        /* v3anno.body = v2anno.resource.map((body) => this.createV3AnnoBody(body));
-        can't do multiple bodies, use the first text body */
-        v3anno.body = this.createV3AnnoBody(v2anno.resource.filter((body) => body['@type'] === 'dctypes:Text')[0]);
+        v3anno.body = v2anno.resource.map((body) => this.createV3AnnoBody(body));
+        /* can't do multiple bodies, use the first text body
+        v3anno.body = this.createV3AnnoBody(v2anno.resource.filter((body) => body['@type'] === 'dctypes:Text')[0]); */
     } else {
         v3anno.body = this.createV3AnnoBody(v2anno.resource);
     }
