@@ -35,7 +35,11 @@ class AnnotationCreation extends Component {
     super(props);
     const annoState = {};
     if (props.annotation) {
-      annoState.annoBody = props.annotation.body.value;
+      if (Array.isArray(props.annotation.body)) {
+        annoState.annoBody = props.annotation.body.filter((body) => body.purpose !== 'tagging')[0].value;
+      } else {
+        annoState.annoBody = props.annotation.body.value;
+      }
       annoState.svg = props.annotation.target.selector.value;
     }
     this.state = {
