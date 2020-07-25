@@ -107,19 +107,20 @@ export default class SimpleAnnotationServerV2Adapter {
   }
 
   createV2AnnoSelector(v3selector) {
-    let v2selector = null;
-    if (v3selector.type === 'SvgSelector') {
-      v2selector = {
-        '@type': 'oa:SvgSelector',
-        'value': v3selector.value
-      }
-    } else if (v3selector.type === 'FragmentSelector') {
-      v2selector = {
-        '@type': 'oa:FragmentSelector',
-        'value': v3selector.value
-      }
+    switch (v3selector.type) {
+      case 'SvgSelector':
+        return {
+          '@type': 'oa:SvgSelector',
+          'value': v3selector.value
+        };
+      case 'FragmentSelector':
+        return {
+          '@type': 'oa:FragmentSelector',
+          'value': v3selector.value
+        };
     }
-    return v2selector;
+    // unknown type :-(
+    return null;
   }
 
   /** Creates an AnnotationPage from a list of V2 annotations */
@@ -178,21 +179,25 @@ export default class SimpleAnnotationServerV2Adapter {
   }
   
   createV3AnnoSelector(v2selector) {
-    if (v2selector['@type'] === 'oa:SvgSelector') {
-      return {
-        'type': 'SvgSelector',
-        'value': v2selector.value
-      }
-    } else if (v2selector['@type'] === 'oa:FragmentSelector') {
-      return {
-        'type': 'FragmentSelector',
-        'value': v2selector.value
-      }
-    } else if (v2selector['@type'] === 'oa:Choice') {
-      return [
-        this.createV3AnnoSelector(v2selector.default),
-        this.createV3AnnoSelector(v2selector.item)
-      ]
+    switch (v2selector['@type']) {
+      case 'oa:SvgSelector':
+        return {
+          'type': 'SvgSelector',
+          'value': v2selector.value
+        }
+      case 'oa:FragmentSelector':
+        return {
+          'type': 'FragmentSelector',
+          'value': v2selector.value
+        }
+      case 'oa:Choice':
+        return this.createV3AnnoSelector(v2selector.item);
+        /* create alternate selectors 
+        return [
+          this.createV3AnnoSelector(v2selector.default),
+          this.createV3AnnoSelector(v2selector.item)
+        ]
+        */
     }
     // unknown selector :-(
     return null;
