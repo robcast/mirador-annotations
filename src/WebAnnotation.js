@@ -2,23 +2,20 @@
 export default class WebAnnotation {
   /** */
   constructor({
-    canvasId, id, xywh, body, svg,
+    canvasId, id, xywh, body, tags, svg,
   }) {
     this.id = id;
     this.canvasId = canvasId;
     this.xywh = xywh;
     this.body = body;
+    this.tags = tags;
     this.svg = svg;
   }
 
   /** */
   toJson() {
     return {
-      body: {
-        language: 'en',
-        type: 'TextualBody',
-        value: this.body,
-      },
+      body: this.createBody(),
       id: this.id,
       motivation: 'commenting',
       target: this.target(),
@@ -26,6 +23,24 @@ export default class WebAnnotation {
     };
   }
 
+  createBody() {
+    let tbody = {
+      language: 'en',
+      type: 'TextualBody',
+      value: this.body,
+    };
+    if (this.tags) {
+      let bodies = [tbody].concat(this.tags.map((tag) => ({
+        type: 'TextualBody',
+        purpose: 'tagging',
+        value: tag,
+      })));
+      return bodies;
+    } else {
+      return tbody;
+    }
+  }
+  
   /** */
   target() {
     let target = this.canvasId;

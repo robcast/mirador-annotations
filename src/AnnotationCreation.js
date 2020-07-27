@@ -36,7 +36,14 @@ class AnnotationCreation extends Component {
     const annoState = {};
     if (props.annotation) {
       if (Array.isArray(props.annotation.body)) {
-        annoState.annoBody = props.annotation.body.filter((body) => body.purpose !== 'tagging')[0].value;
+        annoState.tags = [];
+        props.annotation.body.forEach((body) => {
+          if (body.purpose === 'tagging') {
+            annoState.tags.push(body.value);
+          } else {
+            annoState.annoBody = body.value;
+          }
+        });
       } else {
         annoState.annoBody = props.annotation.body.value;
       }
@@ -127,11 +134,12 @@ class AnnotationCreation extends Component {
     const {
       annotation, canvases, closeCompanionWindow, receiveAnnotation, config,
     } = this.props;
-    const { annoBody, xywh, svg } = this.state;
+    const { annoBody, tags, xywh, svg } = this.state;
     canvases.forEach((canvas) => {
       const storageAdapter = config.annotation.adapter(canvas.id);
       const anno = new WebAnnotation({
         body: annoBody,
+        tags: tags,
         canvasId: canvas.id,
         id: (annotation && annotation.id) || `${uuid()}`,
         svg,

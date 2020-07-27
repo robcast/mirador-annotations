@@ -77,15 +77,15 @@ export default class SimpleAnnotationServerV2Adapter {
         '@type': 'oa:SpecificResource',
         'full': v3anno.target.id
       },
-      'resource': {
-        '@type': 'dctypes:Text',
-        'format': 'text/html',
-        'chars': v3anno.body.value
-      }
     };
     // copy id if it is SAS-generated
     if (v3anno.id && v3anno.id.startsWith('http')) {
         v2anno['@id'] = v3anno.id;
+    }
+    if (Array.isArray(v3anno.body)) {
+        v2anno.resource = v3anno.body.map((body) => this.createV2AnnoBody(body));
+    } else {
+        v2anno.resource = this.createV2AnnoBody(v3anno.body);
     }
     if (v3anno.target.selector) {
       if (Array.isArray(v3anno.target.selector)) {
@@ -100,12 +100,27 @@ export default class SimpleAnnotationServerV2Adapter {
         v2anno.on.selector = this.createV2AnnoSelector(v3anno.target.selector);
       }
     }
-    if (v3anno.body.language) {
-      v2anno.resource.language = v3anno.body.language;
-    }
     return v2anno;
   }
 
+  createV2AnnoBody(v3body) {
+    let v2body = {
+      'chars': v3body.value
+    };
+    if (v3body.purpose === 'tagging') {
+      v2body['@type'] = 'oa:Tag';
+    } else {
+      v2body['@type'] = 'dctypes:Text';
+    }
+    if (v2body.format) {
+      v3body.format = v2body.format;
+    }
+    if (v2body.language) {
+      v3body.language = v2body.language;
+    }
+    return v2body;
+  }
+  
   createV2AnnoSelector(v3selector) {
     switch (v3selector.type) {
       case 'SvgSelector':
