@@ -206,13 +206,13 @@ export default class SimpleAnnotationServerV2Adapter {
           'value': v2selector.value
         }
       case 'oa:Choice':
-        return this.createV3AnnoSelector(v2selector.item);
-        /* create alternate selectors 
+        //return this.createV3AnnoSelector(v2selector.item);
+        /* create alternate selectors */
         return [
           this.createV3AnnoSelector(v2selector.default),
           this.createV3AnnoSelector(v2selector.item)
         ]
-        */
+        
     }
     // unknown selector :-(
     return null;

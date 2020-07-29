@@ -18,7 +18,8 @@ const config = {
     sideBarOpenByDefault: true,
   },
   windows: [{
-    loadedManifest: 'https://iiif.harvardartmuseums.org/manifests/object/299843',
+//    loadedManifest: 'https://iiif.harvardartmuseums.org/manifests/object/299843',
+    loadedManifest: 'https://raw.githubusercontent.com/OscarSeip/oscarseip.github.io/master/Manifests/sCRSn2ThGK/manifest.json'
   }],
 };
 
