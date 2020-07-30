@@ -24,51 +24,50 @@ export default class WebAnnotation {
   }
 
   createBody() {
-    let tbody = {
+    const tbody = {
       language: 'en',
       type: 'TextualBody',
       value: this.body,
     };
     if (this.tags) {
-      let bodies = [tbody].concat(this.tags.map((tag) => ({
+      const bodies = [tbody].concat(this.tags.map((tag) => ({
         type: 'TextualBody',
         purpose: 'tagging',
         value: tag,
       })));
       return bodies;
-    } else {
-      return tbody;
     }
+    return tbody;
   }
-  
+
   /** */
   target() {
     let target = this.canvasId;
     if (this.svg) {
       target = {
-        id: this.canvasId,
+        id: this.canvasId, // should be source, see #25
         selector: {
           type: 'SvgSelector',
           value: this.svg,
-        }
-      }
+        },
+      };
     }
     if (this.xywh) {
-      let fragmentselector = {
+      const fragmentselector = {
         type: 'FragmentSelector',
-        value: `xywh=${this.xywh}`
+        value: `xywh=${this.xywh}`,
       };
       if (target.selector) {
         // add fragment selector
         target.selector = [
           fragmentselector,
-          target.selector
-        ]
+          target.selector,
+        ];
       } else {
         target = {
-          id: this.canvasId,
-          selector: fragmentselector
-        }
+          id: this.canvasId, // should be source, see #25
+          selector: fragmentselector,
+        };
       }
     }
     return target;

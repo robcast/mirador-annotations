@@ -64,37 +64,40 @@ export default class SimpleAnnotationServerV2Adapter {
 
   /** Returns an AnnotationPage with all annotations */
   async all() {
-    return (await fetch(this.annotationPageId)).json().then((annos) => this.createAnnotationPage(annos));
+    return (await fetch(this.annotationPageId)).json()
+      .then((annos) => this.createAnnotationPage(annos));
   }
-  
+
   /** Creates a V2 annotation from a V3 annotation */
   createV2Anno(v3anno) {
-    let v2anno = {
+    const v2anno = {
       '@context': 'http://iiif.io/api/presentation/2/context.json',
       '@type': 'oa:Annotation',
-      'motivation': 'oa:commenting',
-      'on': {
+      motivation: 'oa:commenting',
+      on: {
         '@type': 'oa:SpecificResource',
-        'full': v3anno.target.id
+        full: v3anno.target.id,
       },
     };
     // copy id if it is SAS-generated
     if (v3anno.id && v3anno.id.startsWith('http')) {
-        v2anno['@id'] = v3anno.id;
+      v2anno['@id'] = v3anno.id;
     }
     if (Array.isArray(v3anno.body)) {
-        v2anno.resource = v3anno.body.map((body) => this.createV2AnnoBody(body));
+      v2anno.resource = v3anno.body.map((body) => this.createV2AnnoBody(body));
     } else {
-        v2anno.resource = this.createV2AnnoBody(v3anno.body);
+      v2anno.resource = this.createV2AnnoBody(v3anno.body);
     }
     if (v3anno.target.selector) {
       if (Array.isArray(v3anno.target.selector)) {
-        let selectors = v3anno.target.selector.map((selector) => this.createV2AnnoSelector(selector));
+        const selectors = v3anno.target.selector.map(
+          (selector) => this.createV2AnnoSelector(selector)
+        );
         // create choice, assuming two elements and 0 is default
         v2anno.on.selector = {
           '@type': 'oa:Choice',
-          'default': selectors[0],
-          'item': selectors[1]
+          default: selectors[0],
+          item: selectors[1],
         };
       } else {
         v2anno.on.selector = this.createV2AnnoSelector(v3anno.target.selector);
@@ -104,90 +107,90 @@ export default class SimpleAnnotationServerV2Adapter {
   }
 
   createV2AnnoBody(v3body) {
-    let v2body = {
-      'chars': v3body.value
+    const v2body = {
+      chars: v3body.value,
     };
     if (v3body.purpose === 'tagging') {
       v2body['@type'] = 'oa:Tag';
     } else {
       v2body['@type'] = 'dctypes:Text';
     }
-    if (v2body.format) {
-      v3body.format = v2body.format;
+    if (v3body.format) {
+      v2body.format = v3body.format;
     }
-    if (v2body.language) {
-      v3body.language = v2body.language;
+    if (v3body.language) {
+      v2body.language = v3body.language;
     }
     return v2body;
   }
-  
+
   createV2AnnoSelector(v3selector) {
     switch (v3selector.type) {
       case 'SvgSelector':
         return {
           '@type': 'oa:SvgSelector',
-          'value': v3selector.value
+          value: v3selector.value,
         };
       case 'FragmentSelector':
         return {
           '@type': 'oa:FragmentSelector',
-          'value': v3selector.value
+          value: v3selector.value,
         };
+      default:
+        return null;
     }
-    // unknown type :-(
-    return null;
   }
 
   /** Creates an AnnotationPage from a list of V2 annotations */
   createAnnotationPage(v2annos) {
     if (Array.isArray(v2annos)) {
-        let v3annos = v2annos.map((anno) => this.createV3Anno(anno));
-        return {
-          'id': this.annotationPageId,
-          'items': v3annos,
-          'type': 'AnnotationPage',
-        };
+      const v3annos = v2annos.map((anno) => this.createV3Anno(anno));
+      return {
+        id: this.annotationPageId,
+        items: v3annos,
+        type: 'AnnotationPage',
+      };
     }
     return v2annos;
   }
 
   /** Creates a V3 annotation from a V2 annotation */
   createV3Anno(v2anno) {
-    let v3anno = {
-      'type': 'Annotation',
-      'motivation': 'commenting',
-      'id': v2anno['@id'],
+    const v3anno = {
+      type: 'Annotation',
+      motivation: 'commenting',
+      id: v2anno['@id'],
     };
     if (Array.isArray(v2anno.resource)) {
-        v3anno.body = v2anno.resource.map((body) => this.createV3AnnoBody(body));
+      v3anno.body = v2anno.resource.map((body) => this.createV3AnnoBody(body));
     } else {
-        v3anno.body = this.createV3AnnoBody(v2anno.resource);
+      v3anno.body = this.createV3AnnoBody(v2anno.resource);
     }
     let v2target = v2anno.on;
     if (Array.isArray(v2target)) {
-        v2target = v2target[0];
+      v2target = v2target[0];
     }
     v3anno.target = {
-      'id': v2target.full, // should be source, see #25
-      'selector': this.createV3AnnoSelector(v2target.selector)
-    }
+      id: v2target.full, // should be source, see #25
+      selector: this.createV3AnnoSelector(v2target.selector),
+    };
     if (v2target.within) {
       v3anno.target.source = {
-        'id': v2target.full,
-        'type': 'Canvas',
-        'partOf': {
-          'id': v2target.within,
-          'type': 'Manifest'
+        id: v2target.full,
+        type: 'Canvas',
+        partOf: {
+          id: v2target.within,
+          type: 'Manifest',
         }
-      }
+      };
     }
     return v3anno;
   }
 
   createV3AnnoBody(v2body) {
-    let v3body = {
-      'type': 'TextualBody',
-      'value': v2body.chars
+    const v3body = {
+      type: 'TextualBody',
+      value: v2body.chars,
     };
     if (v2body.format) {
       v3body.format = v2body.format;
@@ -200,28 +203,27 @@ export default class SimpleAnnotationServerV2Adapter {
     }
     return v3body;
   }
-  
+
   createV3AnnoSelector(v2selector) {
     switch (v2selector['@type']) {
       case 'oa:SvgSelector':
         return {
-          'type': 'SvgSelector',
-          'value': v2selector.value
-        }
+          type: 'SvgSelector',
+          value: v2selector.value,
+        };
       case 'oa:FragmentSelector':
         return {
-          'type': 'FragmentSelector',
-          'value': v2selector.value
-        }
+          type: 'FragmentSelector',
+          value: v2selector.value,
+        };
       case 'oa:Choice':
         /* create alternate selectors */
         return [
           this.createV3AnnoSelector(v2selector.default),
-          this.createV3AnnoSelector(v2selector.item)
-        ]
-        
+          this.createV3AnnoSelector(v2selector.item),
+        ];
+      default:
+        return null;
     }
-    // unknown selector :-(
-    return null;
   }
 }
