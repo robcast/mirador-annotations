@@ -160,8 +160,6 @@ export default class SimpleAnnotationServerV2Adapter {
     };
     if (Array.isArray(v2anno.resource)) {
         v3anno.body = v2anno.resource.map((body) => this.createV3AnnoBody(body));
-        /* can't do multiple bodies, use the first text body
-        v3anno.body = this.createV3AnnoBody(v2anno.resource.filter((body) => body['@type'] === 'dctypes:Text')[0]); */
     } else {
         v3anno.body = this.createV3AnnoBody(v2anno.resource);
     }
@@ -170,8 +168,18 @@ export default class SimpleAnnotationServerV2Adapter {
         v2target = v2target[0];
     }
     v3anno.target = {
-      'id': v2target.full,
+      'id': v2target.full, // should be source, see #25
       'selector': this.createV3AnnoSelector(v2target.selector)
+    }
+    if (v2target.within) {
+      v3anno.target.source = {
+        'id': v2target.full,
+        'type': 'Canvas',
+        'partOf': {
+          'id': v2target.within,
+          'type': 'Manifest'
+        }
+      }
     }
     return v3anno;
   }
@@ -206,7 +214,6 @@ export default class SimpleAnnotationServerV2Adapter {
           'value': v2selector.value
         }
       case 'oa:Choice':
-        //return this.createV3AnnoSelector(v2selector.item);
         /* create alternate selectors */
         return [
           this.createV3AnnoSelector(v2selector.default),
