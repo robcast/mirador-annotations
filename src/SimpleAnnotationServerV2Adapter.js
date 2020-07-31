@@ -14,7 +14,7 @@ export default class SimpleAnnotationServerV2Adapter {
   /** */
   async create(annotation) {
     return fetch(`${this.endpointUrl}/create`, {
-      body: JSON.stringify(this.createV2Anno(annotation)),
+      body: JSON.stringify(SimpleAnnotationServerV2Adapter.createV2Anno(annotation)),
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ export default class SimpleAnnotationServerV2Adapter {
   /** */
   async update(annotation) {
     return fetch(`${this.endpointUrl}/update`, {
-      body: JSON.stringify(this.createV2Anno(annotation)),
+      body: JSON.stringify(SimpleAnnotationServerV2Adapter.createV2Anno(annotation)),
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export default class SimpleAnnotationServerV2Adapter {
   }
 
   /** Creates a V2 annotation from a V3 annotation */
-  createV2Anno(v3anno) {
+  static createV2Anno(v3anno) {
     const v2anno = {
       '@context': 'http://iiif.io/api/presentation/2/context.json',
       '@type': 'oa:Annotation',
@@ -84,15 +84,13 @@ export default class SimpleAnnotationServerV2Adapter {
       v2anno['@id'] = v3anno.id;
     }
     if (Array.isArray(v3anno.body)) {
-      v2anno.resource = v3anno.body.map((body) => this.createV2AnnoBody(body));
+      v2anno.resource = v3anno.body.map((b) => this.createV2AnnoBody(b));
     } else {
       v2anno.resource = this.createV2AnnoBody(v3anno.body);
     }
     if (v3anno.target.selector) {
       if (Array.isArray(v3anno.target.selector)) {
-        const selectors = v3anno.target.selector.map(
-          (selector) => this.createV2AnnoSelector(selector)
-        );
+        const selectors = v3anno.target.selector.map((s) => this.createV2AnnoSelector(s));
         // create choice, assuming two elements and 0 is default
         v2anno.on.selector = {
           '@type': 'oa:Choice',
@@ -106,7 +104,8 @@ export default class SimpleAnnotationServerV2Adapter {
     return v2anno;
   }
 
-  createV2AnnoBody(v3body) {
+  /** */
+  static createV2AnnoBody(v3body) {
     const v2body = {
       chars: v3body.value,
     };
@@ -124,7 +123,8 @@ export default class SimpleAnnotationServerV2Adapter {
     return v2body;
   }
 
-  createV2AnnoSelector(v3selector) {
+  /** */
+  static createV2AnnoSelector(v3selector) {
     switch (v3selector.type) {
       case 'SvgSelector':
         return {
@@ -144,7 +144,7 @@ export default class SimpleAnnotationServerV2Adapter {
   /** Creates an AnnotationPage from a list of V2 annotations */
   createAnnotationPage(v2annos) {
     if (Array.isArray(v2annos)) {
-      const v3annos = v2annos.map((anno) => this.createV3Anno(anno));
+      const v3annos = v2annos.map((a) => SimpleAnnotationServerV2Adapter.createV3Anno(a));
       return {
         id: this.annotationPageId,
         items: v3annos,
@@ -155,39 +155,30 @@ export default class SimpleAnnotationServerV2Adapter {
   }
 
   /** Creates a V3 annotation from a V2 annotation */
-  createV3Anno(v2anno) {
+  static createV3Anno(v2anno) {
     const v3anno = {
-      type: 'Annotation',
-      motivation: 'commenting',
       id: v2anno['@id'],
+      motivation: 'commenting',
+      type: 'Annotation',
     };
     if (Array.isArray(v2anno.resource)) {
-      v3anno.body = v2anno.resource.map((body) => this.createV3AnnoBody(body));
+      v3anno.body = v2anno.resource.map((b) => this.createV3AnnoBody(b));
     } else {
       v3anno.body = this.createV3AnnoBody(v2anno.resource);
     }
     let v2target = v2anno.on;
     if (Array.isArray(v2target)) {
-      v2target = v2target[0];
+      [v2target] = v2target;
     }
     v3anno.target = {
       id: v2target.full, // should be source, see #25
       selector: this.createV3AnnoSelector(v2target.selector),
     };
-    if (v2target.within) {
-      v3anno.target.source = {
-        id: v2target.full,
-        type: 'Canvas',
-        partOf: {
-          id: v2target.within,
-          type: 'Manifest',
-        }
-      };
-    }
     return v3anno;
   }
 
-  createV3AnnoBody(v2body) {
+  /** */
+  static createV3AnnoBody(v2body) {
     const v3body = {
       type: 'TextualBody',
       value: v2body.chars,
@@ -204,7 +195,8 @@ export default class SimpleAnnotationServerV2Adapter {
     return v3body;
   }
 
-  createV3AnnoSelector(v2selector) {
+  /** */
+  static createV3AnnoSelector(v2selector) {
     switch (v2selector['@type']) {
       case 'oa:SvgSelector':
         return {

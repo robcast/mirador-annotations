@@ -144,15 +144,17 @@ class AnnotationCreation extends Component {
     const {
       annotation, canvases, closeCompanionWindow, receiveAnnotation, config,
     } = this.props;
-    const { annoBody, tags, xywh, svg } = this.state;
+    const {
+      annoBody, tags, xywh, svg,
+    } = this.state;
     canvases.forEach((canvas) => {
       const storageAdapter = config.annotation.adapter(canvas.id);
       const anno = new WebAnnotation({
         body: annoBody,
-        tags: tags,
         canvasId: canvas.id,
         id: (annotation && annotation.id) || `${uuid()}`,
         svg,
+        tags,
         xywh,
       }).toJson();
       if (annotation) {

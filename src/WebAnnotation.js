@@ -23,21 +23,26 @@ export default class WebAnnotation {
     };
   }
 
+  /** */
   createBody() {
-    const tbody = {
-      language: 'en',
-      type: 'TextualBody',
-      value: this.body,
-    };
-    if (this.tags) {
-      const bodies = [tbody].concat(this.tags.map((tag) => ({
+    let bodies = [];
+    if (this.body) {
+      bodies.push({
         type: 'TextualBody',
+        value: this.body,
+      });
+    }
+    if (this.tags) {
+      bodies = bodies.concat(this.tags.map((tag) => ({
         purpose: 'tagging',
+        type: 'TextualBody',
         value: tag,
       })));
-      return bodies;
     }
-    return tbody;
+    if (bodies.length === 1) {
+      return bodies[0];
+    }
+    return bodies;
   }
 
   /** */
@@ -53,21 +58,17 @@ export default class WebAnnotation {
       };
     }
     if (this.xywh) {
-      const fragmentselector = {
-        type: 'FragmentSelector',
-        value: `xywh=${this.xywh}`,
-      };
       if (target.selector) {
         // add fragment selector
         target.selector = [
-          fragmentselector,
+          {
+            type: 'FragmentSelector',
+            value: `xywh=${this.xywh}`,
+          },
           target.selector,
         ];
       } else {
-        target = {
-          id: this.canvasId, // should be source, see #25
-          selector: fragmentselector,
-        };
+        target = `${this.canvasId}#xywh=${this.xywh}`;
       }
     }
     return target;
