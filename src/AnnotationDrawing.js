@@ -3,7 +3,14 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { OSDReferences } from 'mirador/dist/es/src/plugins/OSDReferences';
 import { renderWithPaperScope, PaperContainer } from '@psychobolt/react-paperjs';
-import { EllipseTool, PolygonTool, RectangleTool } from '@psychobolt/react-paperjs-editor';
+import
+{
+  EllipseTool,
+  PolygonTool,
+  RectangleTool,
+  FreeformPathTool,
+}
+  from '@psychobolt/react-paperjs-editor';
 import { Point } from 'paper';
 import flatten from 'lodash/flatten';
 import EditTool from './EditTool';
@@ -26,13 +33,13 @@ class AnnotationDrawing extends Component {
 
   /** */
   addPath(path) {
-    const { strokeWidth, updateGeometry } = this.props;
+    const { closed, strokeWidth, updateGeometry } = this.props;
     // TODO: Compute xywh of bounding container of layers
     const { bounds } = path;
     const {
       x, y, width, height,
     } = bounds;
-
+    path.closed = closed; // eslint-disable-line no-param-reassign
     // Reset strokeWidth for persistence
     path.strokeWidth = strokeWidth; // eslint-disable-line no-param-reassign
     path.data.state = null; // eslint-disable-line no-param-reassign
@@ -61,7 +68,7 @@ class AnnotationDrawing extends Component {
     // Setup Paper View to have the same center and zoom as the OSD Viewport
     const viewportZoom = this.OSDReference.viewport.getZoom(true);
     const image1 = this.OSDReference.world.getItemAt(0);
-    const center = this.OSDReference.viewport.viewportToImageCoordinates(
+    const center = image1.viewportToImageCoordinates(
       this.OSDReference.viewport.getCenter(true),
     );
     const flipped = this.OSDReference.viewport.getFlip();
@@ -83,6 +90,9 @@ class AnnotationDrawing extends Component {
         break;
       case 'polygon':
         ActiveTool = PolygonTool;
+        break;
+      case 'freehand':
+        ActiveTool = FreeformPathTool;
         break;
       case 'edit':
         ActiveTool = EditTool;
@@ -140,6 +150,7 @@ class AnnotationDrawing extends Component {
 
 AnnotationDrawing.propTypes = {
   activeTool: PropTypes.string,
+  closed: PropTypes.bool,
   fillColor: PropTypes.string,
   strokeColor: PropTypes.string,
   strokeWidth: PropTypes.number,
@@ -150,6 +161,7 @@ AnnotationDrawing.propTypes = {
 
 AnnotationDrawing.defaultProps = {
   activeTool: null,
+  closed: true,
   fillColor: null,
   strokeColor: '#00BFFF',
   strokeWidth: 1,
