@@ -64,8 +64,9 @@ export default class SimpleAnnotationServerV2Adapter {
 
   /** Returns an AnnotationPage with all annotations */
   async all() {
-    return (await fetch(this.annotationPageId)).json()
-      .then((annos) => this.createAnnotationPage(annos));
+    const resp = await fetch(this.annotationPageId);
+    const annos = await resp.json();
+    return this.createAnnotationPage(annos);
   }
 
   /** Creates a V2 annotation from a V3 annotation */
